@@ -1,9 +1,10 @@
 package cn.tchock.tchock;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-public class ChockListActivity extends AppCompatActivity {
+import cn.tchock.R;
+
+public class ChockListActivity extends BaseTChockActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

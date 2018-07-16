@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cn.tchock.tchock">
+    package="cn.tchock">
 
     <application
         android:allowBackup="true"
@@ -8,8 +8,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".TChockApplication"
         android:theme="@style/AppTheme">
-        <activity android:name=".ChockListActivity">
+        <activity android:name=".tchock.ChockListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
