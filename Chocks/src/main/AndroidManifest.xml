@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:name=".TChockApplication"
         android:theme="@style/AppTheme">
-        <activity android:name=".tchock.ChockListActivity">
+        <activity android:name=".activity.ChockListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

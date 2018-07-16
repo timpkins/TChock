@@ -1,6 +1,6 @@
-package cn.tchock.tchock;
+package cn.tchock.activity;
 
-import cn.chock.BaseChockActivity;
+import cn.chock.activity.BaseChockActivity;
 
 /**
  * @author timpkins

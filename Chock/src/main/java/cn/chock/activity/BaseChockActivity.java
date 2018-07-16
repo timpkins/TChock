@@ -1,4 +1,4 @@
-package cn.chock;
+package cn.chock.activity;
 
 import android.support.annotation.IdRes;
 import android.support.v7.app.AppCompatActivity;
