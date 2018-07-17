@@ -1,219 +1,267 @@
 package cn.chock.view;
 
 import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Color;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
+import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.Date;
+
 import cn.chock.R;
-import cn.chock.util.LogUtils;
-import cn.chock.view.ExRecyclerView.RefreshState;
 
-/**
- * {@link ExRecyclerView}下拉刷新的头部
- * @author timpkins
- */
-public class RecyclerHeaderView extends LinearLayout {
-    private static final String TAG = RecyclerHeaderView.class.getSimpleName();
+public class RecyclerHeaderView extends LinearLayout implements BaseRefreshHeader {
+    private LinearLayout mContainer;
+    private ImageView mArrowImageView;
+    private ProgressBar mProgressBar;
+    private TextView mStatusTextView;
+    private int mState = STATE_NORMAL;
 
+    private Animation mRotateUpAnim;
+    private Animation mRotateDownAnim;
 
+    private static final int ROTATE_ANIM_DURATION = 180;
 
+    public int mMeasuredHeight;
 
-    private int refreshThreshold;  // 刷新的阈值
-    private ImageView ivArrow;
-    private TextView tvHint;
-    @RefreshState
-    private int refreshState = ExRecyclerView.STATE_DEFAULT;
+    public void destroy() {
+        mProgressBar = null;
+        if (mRotateUpAnim != null) {
+            mRotateUpAnim.cancel();
+            mRotateUpAnim = null;
+        }
+        if (mRotateDownAnim != null) {
+            mRotateDownAnim.cancel();
+            mRotateDownAnim = null;
+        }
+    }
 
     public RecyclerHeaderView(Context context) {
         super(context);
-        initHeaderView();
-    }
-
-    public RecyclerHeaderView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initHeaderView();
-    }
-
-    public RecyclerHeaderView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initHeaderView();
-    }
-
-    @TargetApi(21)
-    public RecyclerHeaderView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        initHeaderView();
-    }
-
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        ivArrow = findViewById(R.id.ivHeaderArrow);
-        tvHint = findViewById(R.id.tvHeaderHint);
-
-        ivArrow.setColorFilter(Color.parseColor("#3F51B5"));
-
-        ivArrow.clearAnimation();
-        ivArrow.setImageResource(R.mipmap.ic_arrow);
-        tvHint.setText(getStateDesc(refreshState));
-        setVisibleHeight(0);
-    }
-
-    private void initHeaderView() {
-        LogUtils.e(TAG, "initHeaderView");
-        measure(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        refreshThreshold = getResources().getDimensionPixelOffset(R.dimen.recycler_header_height);
-        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, 0));
-        setBackgroundColor(Color.CYAN);
-    }
-
-    public int getRefreshState() {
-        return refreshState;
-    }
-
-    public void setRefreshState(@RefreshState int refreshState) {
-        LogUtils.e(TAG, "下拉刷新：当前状态 = " + getStateDesc(this.refreshState) + "    更改状态 = " + getStateDesc(refreshState));
-        if (this.refreshState == refreshState) {
-            return;
-        }
-        LogUtils.e(TAG, "==");
-        switch (refreshState) {
-            case ExRecyclerView.STATE_DEFAULT:
-                ivArrow.clearAnimation();
-                ivArrow.setVisibility(VISIBLE);
-                if (this.refreshState == ExRecyclerView.STATE_RELEASE) {
-                    rotateAnim(0, 180, 200, 0);
-                    tvHint.setText(getStateDesc(refreshState));
-                }
-                break;
-            case ExRecyclerView.STATE_RELEASE:
-                if (this.refreshState == ExRecyclerView.STATE_DEFAULT) {
-                    rotateAnim(0, 180, 200, 0);
-                    tvHint.setText(getStateDesc(refreshState));
-                }
-                break;
-            case ExRecyclerView.STATE_REFRESH:
-                if (this.refreshState == ExRecyclerView.STATE_RELEASE) {
-                    LogUtils.e(TAG, "STATE_REFRESH");
-                    ivArrow.setImageResource(R.mipmap.ic_refresh);
-                    rotateAnim(0, 359, 500, Animation.INFINITE);
-                    autoScrollTo(refreshThreshold);
-                    tvHint.setText(getStateDesc(refreshState));
-                }
-                break;
-            case ExRecyclerView.STATE_SUCCESS:
-                if (this.refreshState == ExRecyclerView.STATE_REFRESH) {
-                    ivArrow.clearAnimation();
-                    ivArrow.setVisibility(INVISIBLE);
-                    ivArrow.setImageResource(R.mipmap.ic_arrow);
-                    autoScrollTo(0);
-                    tvHint.setText(getStateDesc(refreshState));
-                }
-                break;
-            case ExRecyclerView.STATE_FAILUR:
-                if (this.refreshState == ExRecyclerView.STATE_REFRESH) {
-                    ivArrow.clearAnimation();
-                    ivArrow.setVisibility(INVISIBLE);
-                    ivArrow.setImageResource(R.mipmap.ic_arrow);
-                    autoScrollTo(0);
-                    tvHint.setText(getStateDesc(refreshState));
-                }
-                break;
-        }
-        this.refreshState = refreshState;
-    }
-
-    public void onMove(int deltaX, int deltaY) {
-        LogUtils.e(TAG, "deltaY = " + deltaY + "  VisibleHeight = " + getVisibleHeight());
-        setVisibleHeight(deltaY + getVisibleHeight());
-
-        int visibleHeight = getVisibleHeight();
-        if (visibleHeight >= refreshThreshold) {
-            setRefreshState(ExRecyclerView.STATE_RELEASE);
-        } else {
-            setRefreshState(ExRecyclerView.STATE_DEFAULT);
-//            autoScrollTo(0);
-        }
-    }
-
-    private void setVisibleHeight(int height) {
-        if (height < 0) height = 0;
-        try {
-            LayoutParams lp = (LayoutParams) getLayoutParams();
-            lp.height = height;
-            setLayoutParams(lp);
-        } catch (Exception e) {
-            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) getLayoutParams();
-            lp.height = height;
-            setLayoutParams(lp);
-        }
-    }
-
-    private int getVisibleHeight() {
-        try {
-            LayoutParams lp = (LayoutParams) getLayoutParams();
-            return lp.height;
-        } catch (Exception e) {
-            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) getLayoutParams();
-            return lp.height;
-        }
+        initView();
     }
 
     /**
-     * View以自身中心为圆心不停旋转
-     * @param from 开始的角度
-     * @param to 结束的角度
-     * @param duration 动画持续时间
-     * @param repeatCount 动画持续次数
+     * @param context
+     * @param attrs
      */
-    private void rotateAnim(float from, float to, long duration, int repeatCount) {
-        ivArrow.clearAnimation();
-        ivArrow.setVisibility(VISIBLE);
-        RotateAnimation animation = new RotateAnimation(from, to, Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f);
-        animation.setInterpolator(new LinearInterpolator());
-        animation.setDuration(duration);
-        animation.setRepeatCount(repeatCount);
-        animation.setFillAfter(true);
-        ivArrow.startAnimation(animation);
+    public RecyclerHeaderView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView();
     }
 
-    private void autoScrollTo(int destHeight) {
+    private void initView() {
+        // 初始情况，设置下拉刷新view高度为0
+        mContainer = (LinearLayout) LayoutInflater.from(getContext()).inflate(
+                R.layout.listview_header, null);
+
+        LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 0, 0);
+        this.setLayoutParams(lp);
+        this.setPadding(0, 0, 0, 0);
+
+        addView(mContainer, new LayoutParams(LayoutParams.MATCH_PARENT, 0));
+        setGravity(Gravity.BOTTOM);
+
+        mArrowImageView = (ImageView) findViewById(R.id.listview_header_arrow);
+        mStatusTextView = (TextView) findViewById(R.id.refresh_status_textview);
+
+        //init the progress view
+        mProgressBar = (ProgressBar) findViewById(R.id.listview_header_progressbar);
+
+        mRotateUpAnim = new RotateAnimation(0.0f, -180.0f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        mRotateUpAnim.setDuration(ROTATE_ANIM_DURATION);
+        mRotateUpAnim.setFillAfter(true);
+        mRotateDownAnim = new RotateAnimation(-180.0f, 0.0f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        mRotateDownAnim.setDuration(ROTATE_ANIM_DURATION);
+        mRotateDownAnim.setFillAfter(true);
+
+        measure(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mMeasuredHeight = getMeasuredHeight();
+    }
+
+
+    public void setArrowImageView(int resid) {
+        mArrowImageView.setImageResource(resid);
+    }
+
+    public void setState(int state) {
+        if (state == mState) return;
+
+        if (state == STATE_REFRESHING) {    // 显示进度
+            mArrowImageView.clearAnimation();
+            mArrowImageView.setVisibility(View.INVISIBLE);
+            if (mProgressBar != null)
+                mProgressBar.setVisibility(View.VISIBLE);
+            smoothScrollTo(mMeasuredHeight);
+        } else if (state == STATE_DONE) {
+            mArrowImageView.setVisibility(View.INVISIBLE);
+            if (mProgressBar != null)
+                mProgressBar.setVisibility(View.INVISIBLE);
+        } else {    // 显示箭头图片
+            mArrowImageView.setVisibility(View.VISIBLE);
+            if (mProgressBar != null) {
+                mProgressBar.setVisibility(View.INVISIBLE);
+            }
+        }
+        switch (state) {
+            case STATE_NORMAL:
+                if (mState == STATE_RELEASE_TO_REFRESH) {
+                    mArrowImageView.startAnimation(mRotateDownAnim);
+                }
+                if (mState == STATE_REFRESHING) {
+                    mArrowImageView.clearAnimation();
+                }
+                mStatusTextView.setText(R.string.listview_header_hint_normal);
+                break;
+            case STATE_RELEASE_TO_REFRESH:
+                if (mState != STATE_RELEASE_TO_REFRESH) {
+                    mArrowImageView.clearAnimation();
+                    mArrowImageView.startAnimation(mRotateUpAnim);
+                    mStatusTextView.setText(R.string.listview_header_hint_release);
+                }
+                break;
+            case STATE_REFRESHING:
+                mStatusTextView.setText(R.string.refreshing);
+                break;
+            case STATE_DONE:
+                mStatusTextView.setText(R.string.refresh_done);
+                break;
+            default:
+        }
+
+        mState = state;
+    }
+
+    public int getState() {
+        return mState;
+    }
+
+    @Override
+    public void refreshComplete() {
+        setState(STATE_DONE);
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                reset();
+            }
+        }, 200);
+    }
+
+    public void setVisibleHeight(int height) {
+        if (height < 0) height = 0;
+        LayoutParams lp = (LayoutParams) mContainer.getLayoutParams();
+        lp.height = height;
+        mContainer.setLayoutParams(lp);
+    }
+
+    public int getVisibleHeight() {
+        LayoutParams lp = (LayoutParams) mContainer.getLayoutParams();
+        return lp.height;
+    }
+
+    @Override
+    public void onMove(float delta) {
+        if (getVisibleHeight() > 0 || delta > 0) {
+            setVisibleHeight((int) delta + getVisibleHeight());
+            if (mState <= STATE_RELEASE_TO_REFRESH) { // 未处于刷新状态，更新箭头
+                if (getVisibleHeight() > mMeasuredHeight) {
+                    setState(STATE_RELEASE_TO_REFRESH);
+                } else {
+                    setState(STATE_NORMAL);
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean releaseAction() {
+        boolean isOnRefresh = false;
+        int height = getVisibleHeight();
+        if (height == 0) // not visible.
+            isOnRefresh = false;
+
+        if (getVisibleHeight() > mMeasuredHeight && mState < STATE_REFRESHING) {
+            setState(STATE_REFRESHING);
+            isOnRefresh = true;
+        }
+        // refreshing and header isn't shown fully. do nothing.
+        if (mState == STATE_REFRESHING && height <= mMeasuredHeight) {
+            //return;
+        }
+        if (mState != STATE_REFRESHING) {
+            smoothScrollTo(0);
+        }
+
+        if (mState == STATE_REFRESHING) {
+            int destHeight = mMeasuredHeight;
+            smoothScrollTo(destHeight);
+        }
+
+        return isOnRefresh;
+    }
+
+    public void reset() {
+        smoothScrollTo(0);
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                setState(STATE_NORMAL);
+            }
+        }, 500);
+    }
+
+    private void smoothScrollTo(int destHeight) {
         ValueAnimator animator = ValueAnimator.ofInt(getVisibleHeight(), destHeight);
-        animator.setDuration(300);
-        animator.addUpdateListener(animation -> setVisibleHeight((int) animation.getAnimatedValue()));
+        animator.setDuration(300).start();
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                setVisibleHeight((int) animation.getAnimatedValue());
+            }
+        });
         animator.start();
     }
 
-    private String getStateDesc(@RefreshState int refreshState) {
-        String desc = "默认状态";
-        switch (refreshState) {
-            case ExRecyclerView.STATE_DEFAULT:
-                desc = "默认状态";
-                break;
-            case ExRecyclerView.STATE_FAILUR:
-                desc = "刷新失败";
-                break;
-            case ExRecyclerView.STATE_REFRESH:
-                desc = "正在刷新";
-                break;
-            case ExRecyclerView.STATE_RELEASE:
-                desc = "松开刷新";
-                break;
-            case ExRecyclerView.STATE_SUCCESS:
-                desc = "刷新完成";
-                break;
-        }
-        return desc;
+
+    public static String friendlyTime(Date time) {
+        return friendlyTime(time.getTime());
     }
+
+    public static String friendlyTime(long time) {
+        //获取time距离当前的秒数
+        int ct = (int) ((System.currentTimeMillis() - time) / 1000);
+
+        if (ct == 0) {
+            return "刚刚";
+        }
+
+        if (ct > 0 && ct < 60) {
+            return ct + "秒前";
+        }
+
+        if (ct >= 60 && ct < 3600) {
+            return Math.max(ct / 60, 1) + "分钟前";
+        }
+        if (ct >= 3600 && ct < 86400)
+            return ct / 3600 + "小时前";
+        if (ct >= 86400 && ct < 2592000) { //86400 * 30
+            int day = ct / 86400;
+            return day + "天前";
+        }
+        if (ct >= 2592000 && ct < 31104000) { //86400 * 30
+            return ct / 2592000 + "月前";
+        }
+        return ct / 31104000 + "年前";
+    }
+
 }

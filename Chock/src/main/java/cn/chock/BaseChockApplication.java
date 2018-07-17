@@ -14,6 +14,7 @@ public class BaseChockApplication extends Application {
         super.onCreate();
 
         application = this;
+        Thread.setDefaultUncaughtExceptionHandler(new DefaultExceptionHandler());
     }
 
     /**
@@ -23,5 +24,11 @@ public class BaseChockApplication extends Application {
      */
     public static <T extends BaseChockApplication> T getApplication() {
         return (T)application;
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        System.exit(0);
     }
 }

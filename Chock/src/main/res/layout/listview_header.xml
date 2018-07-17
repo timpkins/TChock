@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/recycler_header_height"
+    android:gravity="bottom">
+
+    <RelativeLayout
+        android:id="@+id/listview_header_content"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/recycler_header_height"
+        android:paddingTop="10dp">
+
+        <TextView
+            android:id="@+id/refresh_status_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/listview_header_hint_normal" />
+
+        <ImageView
+            android:id="@+id/listview_header_arrow"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@+id/refresh_status_textview"
+            android:src="@mipmap/ic_arrow" />
+
+        <ProgressBar
+            android:id="@+id/listview_header_progressbar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@+id/refresh_status_textview"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+</LinearLayout>
