@@ -1,21 +1,24 @@
 package cn.tchock.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import cn.chock.adapter.BaseRecyclerAdapter.OnItemClickListener;
 import cn.chock.view.ExRecyclerView;
 import cn.chock.view.ExRecyclerView.OnRefreshLoadListener;
 import cn.tchock.R;
 import cn.tchock.adapter.FunctionAdapter;
 import cn.tchock.bean.Function;
 
-public class ChockListActivity extends BaseTChockActivity implements OnRefreshLoadListener {
+public class ChockListActivity extends BaseTChockActivity implements OnRefreshLoadListener, OnItemClickListener<Function>{
     private static final String TAG = ChockListActivity.class.getSimpleName();
     private ExRecyclerView ervContent;
     private FunctionAdapter adapter;
@@ -41,6 +44,7 @@ public class ChockListActivity extends BaseTChockActivity implements OnRefreshLo
         ervContent.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         ervContent.setOnRefreshLoadListener(this);
         ervContent.refresh();
+        adapter.setItemClickListener(this);
     }
 
     @Override
@@ -73,15 +77,20 @@ public class ChockListActivity extends BaseTChockActivity implements OnRefreshLo
         }, 1000);
     }
 
-
-
-
-
     private List<Function> getData() {
         List<Function> datas = new ArrayList<>();
         for (int i = (page - 1) * PAGE_SIZE + 1; i <= page * PAGE_SIZE; i++) {
             datas.add(new Function("", "ITEM", String.format(Locale.getDefault(), format, index++)));
         }
         return datas;
+    }
+
+    @Override
+    public void onItemClickListener(View view, int position, Function data) {
+        switch (data.getNum()){
+            case "0001":
+                startActivity(new Intent(this, ConvenientBannerActivity.class));
+                break;
+        }
     }
 }
