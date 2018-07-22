@@ -2,13 +2,13 @@ package cn.tchock.activity;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import cn.chock.view.DividerItemDecoration;
 import cn.chock.view.ExRecyclerView;
 import cn.chock.view.ExRecyclerView.OnRefreshLoadListener;
 import cn.tchock.R;
@@ -40,7 +40,7 @@ public class ChockListActivity extends BaseTChockActivity implements OnRefreshLo
         ervContent.setAdapter(adapter);
         ervContent.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         ervContent.setOnRefreshLoadListener(this);
-        ervContent.refresh();
+        ervContent.onRefreshStart();
     }
 
     @Override
@@ -52,9 +52,9 @@ public class ChockListActivity extends BaseTChockActivity implements OnRefreshLo
                 adapter.addAll(lists);
                 adapter.notifyDataSetChanged();
                 if (ervContent != null)
-                    ervContent.refreshComplete();
+                    ervContent.onRefreshComplete();
             }
-        }, 1000);
+        }, 3000);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ChockListActivity extends BaseTChockActivity implements OnRefreshLo
                 adapter.addAll(lists);
                 adapter.notifyDataSetChanged();
                 if (ervContent != null) {
-                    ervContent.loadMoreComplete();
+                    ervContent.onLoadingComplete();
                     adapter.notifyDataSetChanged();
                 }
             }
